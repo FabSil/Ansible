@@ -1,14 +1,14 @@
 ---
 
 
-- hosts: all
+- hosts: nginxsevs
   vars: 
     - servicio: nginx
   become: yes
   tasks:
 
     - name: instalar nginx
-      ansible.builtin.dnf:
+      dnf:
         name: "{{servicio}}*"
         state: present
          
@@ -21,14 +21,12 @@
 
 
     - name: permitir puerto
-      ansible.posix.firewalld:
+      firewalld:
         zone: public
-        port: "{{ item }}"
+        port: "{{item.port}}"
         permanent: yes
-        state: enabled
-      loop:
-        - 80/tcp
-        - 8080/tcp
+        state: "{{ item.state }}"
+      loop: "{{ firewall_ports }}"
 
     - name: iniciar nginx
       service:
