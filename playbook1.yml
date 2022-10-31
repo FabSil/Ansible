@@ -2,45 +2,42 @@
 
 
 - hosts: all
+  vars: 
+    - servicio: nginx
   become: yes
   tasks:
 
     - name: instalar nginx
       ansible.builtin.dnf:
-        name: "nginx*"
+        name: "{{servicio}}*"
         state: present
          
     - name: nueva pagina
-      ansible.builtin.copy:
-        src: ./src/index.html
-        dest: /usr/share/nginx/html
+      template:
+        src: ./templates/template.j2
+        dest: /usr/share/nginx/html/index.html
       notify: 
       - reiniciar nginx
 
 
-    - name: permitir puerto 8080
+    - name: permitir puerto
       ansible.posix.firewalld:
         zone: public
-        port: 8080/tcp
+        port: "{{ item }}"
         permanent: yes
         state: enabled
+      loop:
+        - 80/tcp
+        - 8080/tcp
 
-    - name: permitir puerto 80
-      ansible.posix.firewalld:
-        zone: public
-        port: 80/tcp
-        permanent: yes
-        state: enabled
-
-        
     - name: iniciar nginx
       service:
-        name: nginx
+        name: "{{servicio}}"
         state: started
 
 
   handlers:
     - name: reiniciar nginx
       service:
-        name: nginx
+        name: "{{servicio}}"
         state: restarted
